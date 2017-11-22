@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Bate-papo com socket.io</title>
+    <style>
+      img{ margin: 0 auto; display: block; opacity: 0.5;}
+      p{ display: block; margin: 0 auto; text-align: center; padding: 50px;}
+      p b{ color: #f76e12; }
+      input[type="button"]{ color: #fff; border-radius: 1px; background: #fc6f11; border:none; height: 30px; display: block; margin: 0 auto;}
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      #celulaform { background: #bbb; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      #celulaform input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #celulaform #enviaMsg { width: 9%; background: #007DC5; border: none; padding: 6px; cursor: pointer; color: #fff; font-weight: bold; text-align: center; float: right;}
+      #mensagens { list-style-type: none; margin: 0; padding: 0; }
+      #mensagens li { padding: 5px 10px; }
+      #mensagens li:nth-child(odd) { background: #eee; }
+
+      #fechaTela{padding: 5px 10px}
+
+      .clienteOff span{ display: block; font-size: 20px; color: #a1a1a1; }
+      .clienteOff span.nomeImob{margin-bottom: 10px; margin-top: 10px; font-size: 26px; color: #3c70dd; font-weight: bold; }
+
+      #blocoAtendimento img{margin-top: 30px;}
+    </style>
+  </head>
+  <body atendimento="">
+
+  <div id="blocoAtendimento">
+    <img src="/chat/images/load.gif" height="61" width="221" alt="">
+    <p>Aguarde...</p>
+    <input type="button" value="Desistir do atendimento" id="fechaTela">
+  </div>
+
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+
+    var socket = io();
+    var atendimento = '';
+    var filaRef = '';
+    var nomeUser = '';
+
+    socket.emit('entraFila');
+
+    socket.on('definiAtendimento', function(objctDados){
+        atendimento = objctDados.atend;
+        filaRef = objctDados.fila;
+        nomeUser = objctDados.n;
+
+        $("body").attr("atendimento", atendimento);
+    });
+
+    socket.on('informativoFila', function(qtdFila, dadosImob){
+        if(qtdFila > 0){
+            $('p').html('Você é o <b id="numeroFila">'+qtdFila+'</b>º na Fila de espera');
+        }else if(dadosImob != ''){
+            exibeDadosImobiliaria(dadosImob);
+        }else{
+            $('p').html('<div class="clienteOff"><span>Não há atendentes disponiveis no momento:</span><span>tente mais tarde</span></div>');
+        }
+    });
+
+    socket.on('entraAtend', function(msg){
+      $('body').html('<ul id="mensagens"></ul><div id="celulaform"><input id="m" autocomplete="off" /><input type="button" id="enviaMsg" value="Enviar"></form>');
+    });
+
+    socket.on('propagaMsg', function(msg){
+      $("#mensagens").append('<li>'+msg+'</li>');
+    });
+
+    $("#fechaTela").click(function(){
+      window.close();
+    });
+
+    $("body").delegate("#enviaMsg", "click", function(){
+        var msg = nomeUser+': '+$('#m').val();
+        socket.emit('mensagem', msg, filaRef , atendimento);
+        $('#m').val('').focus();
+    });
+
+    $( "body" ).keypress(function( event ){
+        if ( event.which == 13 ) {
+            event.preventDefault();
+            $("#enviaMsg").click();
+        }
+    });
+
+    function exibeDadosImobiliaria(dadosImob){
+        $('p').html('<div class="clienteOff"><span>O Cliente não esta online no atendimento entre em contato através do:</span><span class="nomeImob">'+dadosImob[0].nome_fantasia+'</span><span>'+dadosImob[0].email+' - '+dadosImob[0].phone+'</span><span>'+dadosImob[0].address+','+dadosImob[0].number+' - '+dadosImob[0].neighborhood+'</span><span>'+dadosImob[0].city+' / '+dadosImob[0].state+'</span></div>');
+    }
+
+  </script>
+
+  </body>
+</html>

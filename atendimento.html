@@ -1,0 +1,607 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Bate-papo com socket.io</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <style>
+
+      body{overflow: hidden;}
+      ul li{list-style: none;}
+
+      /*#draggable { width: 150px; height: 150px; padding: 0.5em; }*/
+
+      /* BOTAO ATENDIMENTO */
+      #btnAtendimento{ width: 200px; height: 80px; position: fixed; bottom: -10px; right: 20px; border: 1px solid #fc6f11; padding: 4px; background: #3f76e9; border-radius: 6px 6px; cursor: pointer;}
+      #btnAtendimento:hover{background: #fff; }
+      #btnAtendimento img{ float: left; margin-left: 10px; }
+      #btnAtendimento p{ width: 100px; float:left; text-align: center; font-size: 16px; margin-top: 5px; font-weight: bold; color: #fff;}
+      #btnAtendimento p span{ font-size: 18px; text-transform: uppercase; }
+
+      /* PAINEL ATENDIMENTO */
+      #painelAtendimento{ display: block; width: 100%; height: 100%;  background: #fff; overflow: hidden; }
+      #painelAtendimento .abaTopo{ width: 100%; display: block; float: left; height: 24px; background: #4778de; color: #fff;  padding: 5px; text-align: center; clear: both;}
+      #painelAtendimento .columnFila{ width: 28%; height: 1000px; display: block; float: left; border-right: 1px solid #ccc; margin-right: 10px; }
+      #painelAtendimento .columnFila p{ background: #eee; display: block; float: left; width: 100%; text-align: center; padding: 5px 0; margin-bottom: 10px;}
+      #painelAtendimento .columnFila ul{ padding: 0; }
+      #painelAtendimento .columnFila ul li{ padding: 5px; cursor: pointer; clear: both; }
+
+      #painelAtendimento .columnChat{ width: 50%; display: block; float: left; margin-top: 10px; height: 1000px; }
+      #painelAtendimento .columnChat ul{ display: block; background: #fff; margin-top: 43px; z-index: 9999; padding: 0px; }
+
+      /*#painelAtendimento .columnChat ul li.abaAtendimento{ display: inline; border: 1px solid #ccc; padding: 8px; width: 80px; cursor: pointer; }
+      #painelAtendimento .columnChat ul li.abaAtendimento .avisoNum{position: absolute; margin-top: -10px; background: #CC3300; padding: 2px; border-radius: 2px; box-shadow: 0 0 1px 1px #222; font-size: 13px; font-family: arial; color: #fff;}  */
+
+      #painelAtendimento .columnChat #espacoConversa{ position:absolute; width:48%; top:120px; bottom:50px; border-top: 1px solid #ccc; }
+
+      #painelAtendimento .columnChat #espacoConversa ul li{  display: block; clear: both; padding: 10px; border: none; margin-top: 15px;}
+      #painelAtendimento .columnChat #espacoConversa ul li{ display: block; width: 100%; text-align: right; }
+      #painelAtendimento .columnChat #espacoConversa ul li p{ display: block; min-width: 20px; float: left; padding: 6px;border-radius: 6px;border: 1px solid #bbb; margin: 0; margin-right: 10px; text-align: justify;}
+      #painelAtendimento .columnChat #espacoConversa ul li p.msgRemetente{  background: #E2FFC7; float: right; margin-right: 10px;}
+      #painelAtendimento .columnChat #espacoConversa .msgAviso{ display: block; width: 100%; text-align: center; color: #f76e12; font-size: 14px; font-weight: bold;}
+
+      #painelAtendimento .columnChat #espacoConversa .conversa{ position:absolute;width: 94%;bottom:0px;right:0px;left:10px; overflow-y:auto; height:95%; margin: 0;}
+      
+      #painelAtendimento .columnChat #espacoConversa .infoUsur{ display: block; width: 100%; border: 1px solid #ccc; position: absolute; top: -70px; text-align: center; padding: 5px; }
+    /*#painelAtendimento .columnChat #espacoConversa .infoUsur*/
+
+      #painelAtendimento .columnChat #espacoConversa .msgAviso{    display: block; width: 100%; text-align: center; color: #f76e12; font-size: 14px; font-weight: bold;}
+
+      #painelAtendimento .columnConversasAtivas{ display: block; float: left; width: 20%; height: 1000px; border-left: 1px solid #ccc; font-family: arial;}
+      #painelAtendimento .columnConversasAtivas .abasatendimento{ padding: 0; }
+
+      #painelAtendimento .columnConversasAtivas .abasatendimento .active{ border-bottom-color: #fff; }
+
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento{ display: block; border: 1px solid #ccc; padding: 8px 0px; width: 100%; cursor: pointer; position: relative; margin-bottom: 10px; color: #bbb; text-align: center; }
+
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .infosUsuarioAtivo{ display: none; }
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .infosUsuarioAtivo p{ display: block; float: left; width: 100%; margin: 0;  font-weight: normal; }
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .infosUsuarioAtivo p b{color: #aaa;}
+
+      #painelAtendimento .columnConversasAtivas ul.abasatendimento li.active{ border-left: 4px solid #f76e12; color: #222; font-weight: bold; }
+
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .avisoNum{position: absolute; margin-top: -10px; background: #CC3300; padding: 2px; border-radius: 2px; box-shadow: 0 0 1px 1px #222; font-size: 13px; font-family: arial; color: #fff; display: none; right: -4px; top: 6px;}
+
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .iconInfo, #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .fechaAtend{ margin: 3px; color: #007DC5; float: right;}
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .iconInfo:hover,
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .fechaAtend:hover{ color:#f76e12; }
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .vendoAgora{font-size: 12px;display: block;margin-top: 14px;font-weight: normal;border-top: 1px dashed #ccc;padding-top: 6px;}
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .vendoAgora .addImovelToInterest{ margin-left: 10px; }
+      #painelAtendimento .columnConversasAtivas .abasatendimento li.abaAtendimento .vendoAgora .addImovelToInterest:hover{ color: #f76e12; }
+
+
+      #painelAtendimento .columnConversasAtivas .titleConversas{ display: block; width: 100%; padding: 10px; font-weight: bold; text-align: center; background: #eee; font-family: arial; }
+
+      form#fixaBot{ background: #bbb; padding: 3px;position: fixed; bottom: 0; width: 100%; z-index: 9999; }
+      form#fixaBot input { border: 0; padding: 10px; width: 65%; margin-right: .5%; }
+      form#fixaBot i{}
+      form#fixaBot input[type="button"]{ width: 25%; background: #007DC5; border: none; padding: 10px; margin-left: 2px; cursor:pointer; color:#fff;}
+
+      .columnFila #atender{font-size: 14px;color: #fff;text-transform: uppercase;background: #f76e12;float: left;width: 100%;padding: 12px 0;border-radius: 3px;border: none;cursor: pointer;height: auto; }
+      .columnFila #atender:hover{ background: #F5B285; font-weight: bold; }
+
+      .convidaImob{background: #007DC5; border: none; padding: 10px; width: 94%; margin-left: 2px; cursor:pointer; margin: 5px; color:#fff; }
+
+      #janelaAssunto{ width: 300px;height: 280px;display: block;position: absolute;top: 50%;left: 50%;margin-top: -50px;margin-left: -50px;z-index: 999999;display: none; border: 1px solid #ccc; box-shadow: 0 0 13px 0px #000; padding: 10px; background: #fff;}
+      #janelaAssunto textarea, #janelaAssunto input{ display: block; margin: 0 auto; }
+
+      #janelaAssunto input{font-size: 14px;color: #fff;text-transform: uppercase;background: #f76e12; width: 80%;padding: 12px 0;border-radius: 3px;border: none;cursor: pointer;height: auto; margin:12px auto; }
+
+      .listaFrases{position: relative; cursor: pointer;}
+      .listaFrases ul.frasesProntas{ position: absolute; bottom: 0; display: none; width: 290px; z-index: 99999; background: #fff; padding: 4px; border: 1px solid #ccc; }
+      .listaFrases ul.frasesProntas li{ padding: 4px; margin-bottom: 5px; }
+      .listaFrases ul.frasesProntas li:hover{color: #f76e12; cursor: pointer; }
+
+      .addImovelToInterest{margin-left: 10px; margin-right: 10px;}
+      .showImovel{text-decoration: none; color: #000;}
+      .showImovel:hover, .infoUsur .font:hover{color: #f76e12; cursor: pointer; }
+      /*.logoImob{ display: block; text-align: center; margin: 0 auto; margin-top: 10px; }*/
+
+      .clear{clear: both;}
+    </style>
+  </head>
+  <body fila="">
+      <div id="painelAtendimento">
+          <div class="abaTopo">
+              Atendimento Online
+          </div>
+          <div class="columnFila">
+              <p><input id="atender" type="button" value="Atender Próximo"></p>
+              <ul class="representaFila">
+              </ul>
+          </div>
+          <div class="columnChat">           
+              <div id="espacoConversa">
+              </div>
+          </div>
+          <div class="columnConversasAtivas">
+              <div class="titleConversas">
+                Conversas Ativas
+              </div>
+
+              <ul class="abasatendimento">
+              </ul>
+          </div>
+    </div>
+
+    <form action="" id="fixaBot">
+      <input id="m" autocomplete="off" value="" />
+      <input type="hidden" id="conversaAtiva" autocomplete="off" value="" datacontent="" />
+      <i class="fa fa-list listaFrases">
+          <ul class="frasesProntas">
+              <li>Estou adicionando a imobiliária para nos auxiliar nesta informação.</li>
+              <li>Podemos pedir para a imobiliária agendar uma visita ao imóvel.</li>
+              <li>Perfeito. Obrigado pelo contato e nis continuamos a sua disposição a qualquer momento.</li>
+              <li>Posso ajudar em mais alguma coisa?</li>
+              <li>A imobiliária não esta online neste momento para participar da conversa e responder esta pergunta ,mas estas informações estão registradas e ela vai entrar em contato com você o mais breve possível.</li>
+          </ul>
+      </i>
+      <input id="enviaMsg" type="button" value="Enviar">
+    </form>
+
+    <div id="janelaAssunto" datacontent="">
+      <p>Digite o assunto da conversa antes de finalizar com <b></b></p>
+      <textarea name="" id="" cols="30" rows="10"></textarea>
+      <input type="button" value="Enviar" class="enviaAssunto">
+    </div>
+
+    <audio id="audio1" src="assets/skype.mp3" controls preload="auto" autobuffer></audio>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+    <script>
+      var socket = io();
+      socket.emit('IniciaFilaAtend');
+      
+      $(function() {
+        $( "#janelaAssunto" ).draggable();
+      });
+
+      var filaAtendente;
+      var nmAtendente;
+      var chatNumber;
+      var audio = new Audio('/assets/skype.mp3');
+      var audioMsg = new Audio('/assets/skype.mp3');
+      
+      socket.on('definiFilaAtendente', function(filaRef){
+          filaAtendente = filaRef.imob;
+          nmAtendente   = filaRef.nomeUser;
+          chatNumber    = filaRef.chatNumber;
+      });
+      
+      socket.on('iniciaChat', function(){
+          location.reload();
+      });
+
+      socket.on('entraAtend', function(idAtendimento){
+          $(".abaAtendimento").removeClass('active');
+          
+          var nome      = $('.representaFila .'+idAtendimento).text();
+          var telefone  = $('.representaFila .'+idAtendimento).attr('telefone');
+          var email     = $('.representaFila .'+idAtendimento).attr('email');
+          var url       = $('.representaFila .'+idAtendimento).attr('url');
+          var imob      = $('.representaFila .'+idAtendimento).attr('imob').trim();
+
+          $('#espacoConversa .conversa:visible').hide();
+          $('#espacoConversa .infoUsur:visible').hide();
+
+          $('#espacoConversa').prepend('<div class="infoUsur imobConvite'+idAtendimento+'"></div>');
+          $("#espacoConversa").append('<ul class="conversa '+idAtendimento+'"></ul>');
+
+          var conteudo = '<li datacontent="'+idAtendimento+'" imob="'+imob+'" nome="'+nome+'"  class="abaAtendimento active">'+nome+'<i class="fa fa-info-circle iconInfo"></i><i class="fa fa-power-off fechaAtend"></i><span class="avisoNum">0</span><div class="infosUsuarioAtivo"><p><b>Tel</b>: '+telefone+'</p><p><b>Email</b>: '+email+'</p>';
+
+            if(url){
+                conteudo = conteudo+'<p><b>Imovel Ref</b>.: <a href="'+url+'" target="_blank">Click Aqui</a></p>';
+            }
+
+            conteudo = conteudo+'</div><div class="clear"></div>';
+
+            if(!url){
+                conteudo = conteudo+'<div class="vendoAgora">Não esta vendo imóvel</div>';
+            }
+
+            conteudo = conteudo+'</li>';
+
+          $(".abasatendimento").append( conteudo );
+
+          $("#conversaAtiva").attr('datacontent', idAtendimento);
+      });
+
+      socket.on('remontagem', function(dados, msgs){
+
+          $(".abaAtendimento").removeClass('active');
+          $('#espacoConversa .conversa:visible').hide();
+          $('#espacoConversa .infoUsur:visible').hide();
+          
+          $('#espacoConversa').prepend('<div class="infoUsur imobConvite'+dados.atend+'"></div>');
+          $("#espacoConversa").append('<ul class="conversa '+dados.atend+'"></ul>');
+
+          var conteudo = '<li datacontent="'+dados.atend+'" imob="'+dados.imob+'" nome="'+dados.n+'"  class="abaAtendimento active">'+dados.n+'<i class="fa fa-info-circle iconInfo"></i><i class="fa fa-power-off fechaAtend"></i><span class="avisoNum">0</span><div class="infosUsuarioAtivo"><p><b>Tel</b>: '+dados.t+'</p><p><b>Email</b>: '+dados.e;
+
+          if(dados.url){
+              conteudo = conteudo+'</p><p><b>Imovel Ref</b>.: <a href="'+dados.url+'" target="_blank">Click Aqui</a></p>';
+          }
+
+          conteudo = conteudo+'</div><div class="clear"></div>';
+
+          if(!dados.url){
+              conteudo = conteudo+'<div class="vendoAgora">Não esta vendo imóvel</div>';
+          }
+
+          conteudo = conteudo+'</li>';
+
+          $(".abasatendimento").append( conteudo );         
+          $("#conversaAtiva").attr('datacontent', dados.atend);
+
+          for(i in msgs){
+              adicionaMsg(msgs[i].mensagem, msgs[i].interesse_id);
+          }
+
+      });
+
+      socket.on('propagaMsg', function( msg, atendimentoRef ){
+          adicionaMsg(msg, atendimentoRef);
+      });
+
+      socket.on('enviaFilaFull', function( fila ){
+          $('.representaFila li').remove();
+
+          for (var i = 0; i < fila.length; i++) {
+              $('.representaFila').append('<li datacontent="'+fila[i].atend+'" refid="'+fila[i].id+'" fila="'+fila[i].fila+'" telefone="'+fila[i].t+'" email="'+fila[i].e+'" url="'+fila[i].url+'" imob="'+fila[i].imob+'" titleImovel="'+fila[i].titleImovel+'" chatNumberUser="'+fila[i].chatNumberUser+'"  class="active '+fila[i].atend+'">'+fila[i].n+'</li>');
+          }
+
+          if( fila.length > 0){
+              audio.addEventListener('ended', showAlert);
+              audio.play();
+          }
+      });
+
+      function showAlert() {
+          notify();
+      }
+
+      socket.on('propagaStatusImob', function( idImob, dados, status ){
+
+          // console.log('==================');
+          // console.log('executo');
+          // console.log('idImob'+idImob);
+          // console.log('status'+status);
+          // console.log(dados);
+          // console.log('==================');
+          // console.log('Qtd LIS:'+$(".abasatendimento li").length);
+
+          $(".abasatendimento li").each(function(){
+
+              if( $(this).attr('imob') == idImob ){
+
+                  console.log('acho o idImob');
+
+                  var atendRef = $(this).attr('datacontent');
+                  var nomeUser = $(this).attr('nome');
+
+                  // var texto = "<b>Usuário não tem nenhum interesse em imóvel especifico.";
+                  // $('#espacoConversa').prepend('<div class="infoUsur imobConvite'+atendRef+'">'+texto+'</div>');
+
+                  if( status == 0 ){
+                      var texto = "<b>"+dados[0].nome_fantasia+"</b> não esta online no momento <i class='fa fa-user-plus font AddDataUser' nmFantasia='"+dados[0].nome_fantasia+"' phone1='"+dados[0].phone+"' email='"+dados[0].email+"' logo='"+dados[0].logo+"'></i>";
+                      $('.imobConvite'+atendRef).html(texto);
+                  }
+                  else if(dados != '')
+                  {
+                      $('.imobConvite'+atendRef).html('<input class="convidaImob" nomeImob="'+dados[0].nome_fantasia+'" nomeUser="'+nomeUser+'" atend="'+atendRef+'" idImob="'+idImob+'" value="'+dados[0].nome_fantasia+' esta online, clique e convide">');
+                  }else{
+                      $('.imobConvite'+atendRef).html('<b>Usuário não tem nenhum interesse em imóvel especifico.</b>'); 
+                  }
+
+                  if( $("#espacoConversa").find('.'+atendRef).is(':visible') ){
+                      $('.imobConvite'+atendRef).fadeIn('fast');
+                  }else{
+                      $('.imobConvite'+atendRef).fadeOut('fast');
+                  }
+              }
+          });
+      });
+
+      socket.on('fechaJanelasAtend', function( msg, atendimentoRef ){
+          adicionaMsg(msg, atendimentoRef);
+          $(".abasatendimento li").each(function(){
+              if($(this).attr('datacontent') == atendimentoRef){
+                  $(this).addClass('off');
+                  $(this).css('color', '#771211');
+                  $(this).find('.iconInfo').remove();
+                  $(this).find('.infosUsuarioAtivo').remove();
+
+                  if( $(this).hasClass('active') ){
+                      $("#fixaBot").fadeOut('fast');
+                  }
+              }
+          });
+      });
+
+      socket.on('updatePageCliente', function( urlImovel,idImovel, atendimentoRef, codImovel ){
+          
+        // console.log('recebeu o update');
+          $('.abasatendimento li').each(function(){
+              if( $(this).attr("datacontent") == atendimentoRef ){
+                  if(idImovel > 0){
+                      $(this).find('.vendoAgora').html(
+                        codImovel+' <i class="fa fa-plus-circle addImovelToInterest" idImovel="'+idImovel+'" atendimento="'+atendimentoRef+'"></i> <a href="'+urlImovel+'" target="_blank" class="showImovel"></i"><i class="fa fa-external-link-square "></a>');
+                  }else{
+                      $(this).find('.vendoAgora').html('Não esta vendo imóvel');
+                  }
+              }
+          });
+      });
+
+      socket.on('updateDataInterest', function( dataUser ){
+          $('.abasatendimento li').each(function(){
+              if( $(this).attr("datacontent") == dataUser.atend ){
+                  $(this).attr("imob", dataUser.imob);
+                  $(this).find('.infosUsuarioAtivo').append('<p><b>Imovel Ref</b>.: <a href="'+dataUser.url+'" target="_blank">Click Aqui</a></p>');
+                  $(this).find('.vendoAgora').remove();
+              }
+          });
+      });
+
+      $('#atender').click(function(){
+          if($('.representaFila li').length > 0){
+              var dados = {
+                  id: $('.representaFila li').eq(0).attr('refid'),
+                  n: $('.representaFila li').eq(0).text(),
+                  e: $('.representaFila li').eq(0).attr('email'),
+                  t: $('.representaFila li').eq(0).attr('telefone'),
+                  atend: $('.representaFila li').eq(0).attr('datacontent'),
+                  imob:  $('.representaFila li').eq(0).attr('imob'),
+                  fila:  $('.representaFila li').eq(0).attr('fila'),
+                  titleImovel:  $('.representaFila li').eq(0).attr('titleImovel'),
+                  url:  $('.representaFila li').eq(0).attr('url'),
+                  chatNumberUser:  $('.representaFila li').eq(0).attr('chatNumberUser')
+              };
+              socket.emit('IniciaAtend', dados, nmAtendente, chatNumber );
+              $("#fixaBot").fadeIn('fast');
+          }
+      });
+
+      $("body").delegate("#enviaMsg", "click", function(){
+          if( $('#m').val() != '' ){
+              var msg = 'Atendente: '+$('#m').val();
+              // if( $("#conversaAtiva").attr('datacontent') > 0 ){
+              socket.emit('mensagem', msg, filaAtendente , $("#conversaAtiva").attr('datacontent'));
+              $('#m').val('').focus();
+              // }
+          }
+      });
+
+      $("body").delegate(".abaAtendimento", "click", function(){         
+          $(".abaAtendimento").removeClass('active');
+          $(this).find('.avisoNum').text(0).hide();
+
+          $('#espacoConversa .conversa:visible').hide();
+          $('#espacoConversa .infoUsur:visible').hide();
+        
+          $(this).addClass('active');
+
+          var classConversa = $(this).attr('datacontent');
+
+          if($(this).hasClass('off')){
+              $("#fixaBot").fadeOut('fast');
+          }else{
+              $("#fixaBot").fadeIn('fast');
+          }
+
+          $("#conversaAtiva").attr('datacontent', classConversa);
+          $('.'+classConversa).fadeIn('fast');
+          $('.imobConvite'+classConversa).fadeIn('fast');
+      });
+
+      $("body").delegate(".iconInfo", "click", function(){
+          $('.infosUsuarioAtivo').hide('');
+          $(this).parent().find('.infosUsuarioAtivo').fadeIn('fast');
+      });
+
+      $("body").delegate(".fechaAtend", "click", function(){
+          var idAtend = $(this).parent().attr('datacontent');
+          $("#janelaAssunto").attr('datacontent', idAtend).fadeIn('fast');
+          $("#janelaAssunto").find('b').html( $(this).parent().attr('nome') );
+          
+          // $(this).parent().remove();
+      });
+
+      $("body").delegate(".convidaImob", "click", function(){
+
+          var dados = {
+              idImob: $(this).attr('idImob'),
+              atend: $(this).attr('atend'),
+              nmUser: $(this).attr('nomeuser') 
+          }
+         
+          var texto = '<b>um convite foi enviado para '+$(this).attr('nomeImob')+' ela pode recusar ou aceitar</b>';
+          $('.imobConvite'+dados.atend).html(texto);
+
+          socket.emit('conviteImobiliaria', dados );
+      });
+      
+      $( "body" ).keypress(function( event ){
+          if ( event.which == 13 ) {
+              event.preventDefault();
+              $("#enviaMsg").click();
+          }
+      }); 
+
+      $(".enviaAssunto").click(function(){
+
+          if( $(this).prev().val() != ''){
+              var atendimentoRef = $(this).parent().attr('datacontent');
+              socket.emit('finalizaAtend', atendimentoRef, 0);
+
+              var msg = $(this).prev().val();
+              $(this).prev().val('');
+
+              if(msg != ''){
+                  socket.emit('updateLeadAtend', atendimentoRef, msg);
+              }
+
+              $('#espacoConversa').find('.'+atendimentoRef).remove();
+              $('.imobConvite'+atendimentoRef).remove();
+
+              $('.abasatendimento li').each(function(){
+                  if( $(this).attr('datacontent') == atendimentoRef){
+                      $(this).remove();
+                  }
+              });
+              
+              $(this).parent().hide();
+          }
+          
+      });
+    
+      $(".listaFrases").click(function(){
+          if($('.frasesProntas').is(':visible')){
+            $('.frasesProntas').hide();
+          }else{
+            $('.frasesProntas').show('fast');
+          }
+      });
+      
+      $(".frasesProntas li").click(function(){
+
+          $('#m').val( $(this).text());
+          $('#enviaMsg').click();
+      });
+
+      $("body").delegate(".addImovelToInterest", "click", function(){
+        // $('.addImovelToInterest').click(function(){
+
+          confirm("Deseja realmente adicionar o imóvel para este interesse?");
+
+          var atend = $(this).attr('atendimento');
+          var idImovel = $(this).attr('idImovel');
+
+          socket.emit('addImovelToUpdate', atend, idImovel );
+          // console.log('adiciona imovel ao interesse');
+      });
+
+      $("body").delegate(".AddDataUser", "click", function(){
+
+          var string = '';
+
+          if($(this).attr('logo') != '' && $(this).attr('logo') != undefined){
+              string += '<br><img class="logoImob" src="/'+$(this).attr('logo')+'" width="70" style="display: block; text-align: center; margin: 0 auto; margin-top: 10px;">';
+          }
+
+          string += '<br><b>Imobiliaria:</b> '+$(this).attr('nmFantasia')+',<br><b>Telefone:</b> '+$(this).attr('phone1')+',<br><b>Email:</b>'+$(this).attr('email');
+
+          $("#m").val(string);
+          $("#enviaMsg").click();
+      });
+
+      // $("body").delegate(".showImovel", "click", function(){
+      
+          // $(this).attr("urlImovel");
+          // $('.addImovelToInterest').click(function(){
+          // confirm("Deseja realmente adicionar o imóvel para este interesse?");
+          // var atend = $(this).attr('atendimento');
+          // var idImovel = $(this).attr('idImovel');
+          // socket.emit('addImovelToUpdate', atend, idImovel );
+          // console.log('adiciona imovel ao interesse');
+      // });
+
+      var varVeriLong;
+
+      var verifLong = function(){
+          if(socket.connected == false){
+              console.log('nao Esta conectado');
+              console.log('Tenta Reestabelecer conexao');
+              socket = io();
+              socket.emit('IniciaFilaAtend');
+          }else{
+              console.log('Segue normal');
+          }
+      };
+
+      var autenticaConexao = function(){
+          if(socket.connected == true){             
+              socket.emit('autentica', 0, chatNumber, socket.io.engine.id);
+          }
+      };
+
+      varVeriLong = setInterval(verifLong, 20000);
+      varAutenticaConexao = setInterval(autenticaConexao, 60000);
+
+      function adicionaMsg(msg, atendimentoRef){
+
+          var classCss = '';
+
+          var msgSplit = msg.split(':');
+
+          if( msgSplit[0].trim() == 'Atendente' ){
+              classCss = 'class="msgRemetente"';
+          }else if( msgSplit[0].trim() == 'aviso' ){
+              msg = msgSplit[1].trim();
+              classCss = 'class="msgAviso"';
+          }else{
+              audioMsg.play();
+          }
+
+          $(".abaAtendimento").each(function(){
+              if( $(this).attr('datacontent') ==  atendimentoRef){
+                  if( ! $(this).hasClass('active') ){
+                      var numMsgAtual = parseInt($(this).find('.avisoNum').text());
+                      numMsgAtual++;  
+                      $(this).find('.avisoNum').text(numMsgAtual).fadeIn('slow');
+                  }
+              }
+          });
+
+          $("#espacoConversa ."+atendimentoRef).append('<li><p '+classCss+'>'+msg+'</p></li>');
+
+          // $('.conversa').animate({
+          //       scrollTop: $('.conversa').offset().top
+          // }, 'slow');
+          
+          $(".conversa").animate({ 
+              scrollTop: "+=100" 
+          }, 10);
+      }
+
+      var verifPermision = function(){
+          if (Notification.permission === 'default') {
+              Notification.requestPermission(function() {
+                  console.log('Usuário não falou se quer ou não notificações. Logo, o requestPermission pede a permissão pra ele.');
+              });
+          }
+      };
+
+      var notify = function() {
+          if (Notification.permission === 'granted') {
+              console.log('Usuário deu permissão');
+              var notification = new Notification('Atendimento', {
+               body: 'Você tem novos convites de atendimento, verifique sua fila',
+               tag: 'novoatendimento',
+               icon: '/site/images/logo.png',
+              });
+              notification.onshow = function() {
+                  console.log('onshow: evento quando a notificação é exibida')
+              },
+              notification.onclick = function() {
+                  console.log('onclick: evento quando a notificação é clicada')
+              },
+              notification.onclose = function() {
+                  console.log('onclose: evento quando a notificação é fechada')
+              },
+              notification.onerror = function() {
+                  console.log('onerror: evento quando a notificação não pode ser exibida. É disparado quando a permissão é defualt ou denied')
+              }
+          } else if (Notification.permission === 'denied') {
+              console.log('Usuário não deu permissão');
+          }
+      };
+  
+      verifPermision();
+  </script>
+
+
+  </body>
+</html>

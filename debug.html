@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Bate-papo com socket.io</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+  <style>
+
+    b.green{color: green;}
+
+  </style>
+
+  </head>
+  <body>
+   
+    <div class="col-md-6">
+        <div class="col-md-12">      
+            <input type="text" id="idImob"><input type="submit" value="Ver Atendentes da Imobiliaria" id="viewSuportImob"></button>
+        </div>
+        <br>================================================<br><br>
+        <div class="col-md-12">      
+            <input type="submit" value="Ver Imobiliarias Online" id="imobOn"></button>
+        </div>
+    </div>
+    <div class="col-md-6">
+        
+        <h3 class="col-md-12">Comandos Executados</h3>
+        <div class="col-md-12" style="max-height:350px; overflow-y: auto;border: 1px solid #ccc;" id="command">
+        </div>
+
+        <h3  class="col-md-12">Console</h3>
+        <div class="col-md-12" style="max-height:350px; overflow-y: auto;color: #aaa;border: 1px solid #ccc;" id="console">
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+    <script>    
+      var socket = io();
+      socket.emit('habilitaDebug');
+      
+      socket.on('iniciaDebug', function(){
+
+          // console.log('reinicio');
+
+          location.reload();
+      });
+
+      socket.on('InformaImobEntrou', function( dadosImob, atendentes ){
+        
+          var body = "";
+        
+          $("#console").prepend("========================================================<br>");
+          if(dadosImob.imob){
+              body += "Código :"+dadosImob.imob+"<br>NomeUser :<b>"+dadosImob.nomeUser+"</b><br>Qtd Atendentes:"+atendentes.length+"<br>";
+              for(a in atendentes){
+                  body += " - "+atendentes[a].nomeUser+" | Socket.id = <b class='green'>"+atendentes[a].id+"</b><br>";
+              }
+          }else{
+              body += "Código :"+dadosImob.idImob+"<br>NomeImob :"+dadosImob.nmImobi+"<br>Qtd Atendentes:"+atendentes.length+"<br>";
+          }
+
+          $("#console").prepend(body);
+          $("#console").prepend("<b>Entrada de Imobiliaria</b><br>");
+          console.log(atendentes);
+      });
+
+      socket.on('imobOnResponse', function( allImob, resultDb ){
+
+          $("#command").html("");
+          
+          $.each(allImob, function( index, value ) {
+              var imob = "";
+              var imobId = "";
+
+              if(value != null){
+                  if(index == 0){
+                      $.each(value, function( key, val ){
+                          imob += " -- "+val.nomeUser+" | socket.id = "+val.id+"<br>";
+                      });
+
+                      $("#command").prepend("<b class='green'>Servidor </b> <button idImob=0 class='reconnectImob'>Reconnect</button><br>Qtd Atendentes: "+value.length+"<br>"+imob+"<br><br>");
+                  }else{
+                      var nmimob = retornaNm(index, resultDb);                    
+                      $.each(value, function( key, val ) {
+                          imob += " -- Atendente: - socket.id = "+val.id+"<br>";
+                          imobId = val.idImob;
+                      });
+
+                      $("#command").prepend("<b class='green'>"+nmimob+"</b> <button idImob="+imobId+" class='reconnectImob'>Reconnect</button><br>Qtd Atendentes: "+value.length+"<br>"+imob+"<br><br>");
+                  }                 
+              }
+          });
+          
+          $("#command").prepend("<b>Imobiliarias que estao online</b><br>");
+          // console.log(allImob);
+      });
+
+      $("#imobOn").click(function(){
+          socket.emit('imobOn');
+      });
+
+      $("body").delegate(".reconnectImob", "click", function(){
+      // $(".reconnectImob").click(function(){
+          console.log("reconecta"+$(this).attr("idImob"));
+          socket.emit('reconnectImob', $(this).attr("idImob"));
+      });
+
+      function retornaNm(index, resultDb){
+          for(n in resultDb){
+              
+              if( resultDb[n].id == index ){
+                  return resultDb[n].nome_fantasia;
+              }
+          }
+      }
+
+    </script>
+  </body>
+</html>

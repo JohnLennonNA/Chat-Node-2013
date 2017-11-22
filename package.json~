@@ -1,0 +1,6 @@
+{
+  "name": "bate-papo-socket",
+  "version": "0.0.1",
+  "description": "minha primeira aplicação com socket.io",
+  "dependencies": {}
+}
